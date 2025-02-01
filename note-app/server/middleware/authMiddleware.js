@@ -2,16 +2,19 @@ const jwt = require('jsonwebtoken');
 
 // Middleware to check if the user is authenticated
 const authenticateJWT = (req, res, next) => {
-  const token = req.header('Authorization')?.split(' ')[1];  // Get token from header "Authorization: Bearer token"
-  if (!token) {
-    return res.status(401).send('Access Denied'); // No token means unauthorized
+  const authHeader = req.header('Authorization');
+  console.log("Incoming Authorization Header:", authHeader); // ✅ Debugging step
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).send('Access Denied: No Token Provided');
   }
 
+  const token = authHeader.split(' ')[1]; // Extract token
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
-      return res.status(403).send('Invalid Token');  // Token is invalid or expired
+      return res.status(403).send('Invalid Token');
     }
-    req.user = user;  // Add the decoded user info to the request object
+    req.user = user;
     next();
   });
 };

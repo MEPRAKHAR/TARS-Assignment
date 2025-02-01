@@ -1,43 +1,97 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const bodyParser = require('body-parser');
+const bcrypt = require('bcrypt');
+const dotenv = require('dotenv');
+const User = require('./models/User');
+const Note = require('./models/Note');
+
+dotenv.config();
 
 const app = express();
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 
-const notes = [];
-const users = [{ username: 'testuser', password: 'password123' }];
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
-app.post('/api/auth/login', (req, res) => {
+// Middleware to authenticate JWT
+const authenticateJWT = (req, res, next) => {
+  const token = req.header('Authorization')?.split(' ')[1];
+  if (!token) return res.status(401).send('Access Denied');
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).send('Invalid Token');
+    req.user = user;
+    next();
+  });
+};
+
+// User Registration
+app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
-  const user = users.find(u => u.username === username && u.password === password);
-  if (!user) return res.status(401).json({ message: 'Invalid credentials' });
-
-  const token = jwt.sign({ username }, 'secret', { expiresIn: '1h' });
-  res.json({ token });
-});
-
-app.get('/api/notes', (req, res) => res.json(notes));
-
-app.post('/api/notes', (req, res) => {
-  notes.push({ title: req.body.title, content: req.body.content });
-  res.status(201).json({ message: 'Note saved!' });
-});
-
-app.delete('/api/notes/:id', async (req, res) => {
-  const noteId = req.params.id;
-
-  // Simulate deleting the note (replace with database logic)
-  const noteIndex = notes.findIndex(note => note.id === noteId);
-  if (noteIndex === -1) {
-    return res.status(404).json({ message: 'Note not found' });
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({ username, password: hashedPassword });
+    await user.save();
+    res.status(201).json({ message: 'User registered successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error registering user' });
   }
-
-  notes.splice(noteIndex, 1);
-  res.json({ message: 'Note deleted successfully' });
 });
 
+// User Login
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const user = await User.findOne({ username });
+    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
-app.listen(3001, () => console.log('Server running on port 3001'));
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.json({ token });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create a Note
+app.post('/api/notes', authenticateJWT, async (req, res) => {
+  const { title, content } = req.body;
+  try {
+    const newNote = new Note({ title, content, userId: req.user.userId });
+    await newNote.save();
+    res.status(201).json(newNote);
+  } catch (error) {
+    res.status(500).json({ message: 'Error saving note' });
+  }
+});
+
+// Get All Notes for a User
+app.get('/api/notes', authenticateJWT, async (req, res) => {
+  try {
+    const notes = await Note.find({ userId: req.user.userId });
+    res.json(notes);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching notes' });
+  }
+});
+
+// Delete a Note
+app.delete('/api/notes/:id', authenticateJWT, async (req, res) => {
+  try {
+    await Note.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Note deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting note' });
+  }
+});
+
+// Start the server
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
