@@ -73,10 +73,6 @@ button:hover {
   margin: 0;
 }
 
-.note button {
-  margin-right: 10px;
-}
-
 .notes-container input[type="text"] {
   width: 100%;
   padding: 10px;
@@ -84,6 +80,7 @@ button:hover {
   border-radius: 5px;
   border: 1px solid #ccc;
 }
+
 
 
 .note button {
@@ -102,4 +99,34 @@ button:hover {
 
 .login-container a:hover {
   text-decoration: underline;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 80%;
+  max-width: 500px;
+}
+
+.modal-content textarea {
+  width: 100%;
+  height: 100px;
+  margin-bottom: 10px;
+}
+
+.modal-content button {
+  margin-right: 10px;
 }

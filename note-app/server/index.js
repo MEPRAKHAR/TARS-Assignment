@@ -45,78 +45,13 @@ const authenticateJWT = (req, res, next) => {
   });
 };
 
-// User Registration
-app.post('/api/register', async (req, res) => {
-  const { username, password } = req.body;
+
+app.get('/api/notes', authenticateJWT, async (req, res) => {
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ username, password: hashedPassword });
-    await user.save();
-    res.status(201).json({ message: 'User registered successfully' });
+    const notes = await Note.find({ userId: req.user.userId }); // Fetch notes for the logged-in user
+    res.json(notes);
   } catch (error) {
-    res.status(500).json({ message: 'Error registering user' });
-  }
-});
-
-// User Login
-app.post('/api/login', async (req, res) => {
-  const { username, password } = req.body;
-  try {
-    const user = await User.findOne({ username });
-    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
-
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// Create a Note
-app.post('/api/notes', authenticateJWT, upload.single('image'), async (req, res) => {
-  const { title, content, audio } = req.body;
-  try {
-    const newNote = new Note({
-      title,
-      content,
-      userId: req.user.userId,
-      audio,
-      image: req.file ? req.file.path : null, // Save image path if uploaded
-    });
-    await newNote.save();
-    res.status(201).json(newNote);
-  } catch (error) {
-    res.status(500).json({ message: 'Error saving note' });
-  }
-});
-
-// Update a Note (Edit)
-app.put('/api/notes/:id', authenticateJWT, upload.single('image'), async (req, res) => {
-  const { title, content, audio, favorite } = req.body;
-  try {
-    const updatedNote = await Note.findByIdAndUpdate(
-      req.params.id,
-      { title, content, audio, favorite, image: req.file ? req.file.path : null },
-      { new: true }
-    );
-    res.json(updatedNote);
-  } catch (error) {
-    res.status(500).json({ message: 'Error updating note' });
-  }
-});
-
-// Toggle Favorite
-app.patch('/api/notes/:id/favorite', authenticateJWT, async (req, res) => {
-  try {
-    const note = await Note.findById(req.params.id);
-    note.favorite = !note.favorite;
-    await note.save();
-    res.json(note);
-  } catch (error) {
-    res.status(500).json({ message: 'Error toggling favorite' });
+    res.status(500).json({ message: 'Error fetching notes' });
   }
 });
 
@@ -134,6 +69,36 @@ app.get('/api/notes/search', authenticateJWT, async (req, res) => {
     res.json(notes);
   } catch (error) {
     res.status(500).json({ message: 'Error searching notes' });
+  }
+});
+
+// Update a Note (Edit)
+app.put('/api/notes/:id', authenticateJWT, upload.fields([{ name: 'audio', maxCount: 1 }, { name: 'image', maxCount: 1 }]), async (req, res) => {
+  const { title, content } = req.body;
+  try {
+    const updatedNote = await Note.findByIdAndUpdate(
+      req.params.id,
+      {
+        title,
+        content,
+        audio: req.files.audio ? req.files.audio[0].path : null,
+        image: req.files.image ? req.files.image[0].path : null,
+      },
+      { new: true }
+    );
+    res.json(updatedNote);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating note' });
+  }
+});
+
+// Delete a Note
+app.delete('/api/notes/:id', authenticateJWT, async (req, res) => {
+  try {
+    await Note.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Note deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting note' });
   }
 });
 

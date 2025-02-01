@@ -7,20 +7,42 @@ const Home = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isRecording, setIsRecording] = useState(false);
-  const [audioFile, setAudioFile] = useState(null);
+  const [audioBlob, setAudioBlob] = useState(null); // Store the recorded audio blob
   const [imageFile, setImageFile] = useState(null);
   const token = localStorage.getItem('token');
   const fileInputRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   const handleRecord = () => {
     if (isRecording) {
+      // Stop recording
+      mediaRecorderRef.current.stop();
       setIsRecording(false);
     } else {
-      setIsRecording(true);
-      startRecording((transcript) => {
-        setContent((prevContent) => prevContent + ' ' + transcript);
-        setIsRecording(false);
-      });
+      // Start recording
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then((stream) => {
+          mediaRecorderRef.current = new MediaRecorder(stream);
+          mediaRecorderRef.current.ondataavailable = (event) => {
+            audioChunksRef.current.push(event.data);
+          };
+          mediaRecorderRef.current.onstop = () => {
+            const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+            setAudioBlob(audioBlob); // Save the recorded audio blob
+            audioChunksRef.current = [];
+          };
+          mediaRecorderRef.current.start();
+          setIsRecording(true);
+
+          // Start transcription
+          startRecording((transcript) => {
+            setContent((prevContent) => prevContent + ' ' + transcript);
+          });
+        })
+        .catch((error) => {
+          console.error('Error accessing microphone:', error);
+        });
     }
   };
 
@@ -38,8 +60,12 @@ const Home = () => {
     const formData = new FormData();
     formData.append('title', title);
     formData.append('content', content);
-    formData.append('audio', audioFile);
-    formData.append('image', imageFile);
+    if (audioBlob) {
+      formData.append('audio', audioBlob, 'recording.wav'); // Append the audio blob
+    }
+    if (imageFile) {
+      formData.append('image', imageFile); // Append the image file
+    }
 
     try {
       await axios.post('http://localhost:3001/api/notes', formData, {
@@ -50,7 +76,7 @@ const Home = () => {
       });
       setTitle('');
       setContent('');
-      setAudioFile(null);
+      setAudioBlob(null);
       setImageFile(null);
       alert('Note created successfully!');
     } catch (error) {
@@ -71,6 +97,12 @@ const Home = () => {
         <input type="file" accept="image/*" onChange={handleImageUpload} ref={fileInputRef} />
         <button type="submit">Save Note</button>
       </form>
+      {audioBlob && (
+        <div>
+          <h3>Recorded Audio</h3>
+          <audio controls src={URL.createObjectURL(audioBlob)} />
+        </div>
+      )}
     </div>
   );
 };
