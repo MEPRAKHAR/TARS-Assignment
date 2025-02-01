@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom'; // Import Link
 import '../App.css';
 
 const Login = ({ setToken }) => {
@@ -12,8 +12,8 @@ const Login = ({ setToken }) => {
     e.preventDefault();
     try {
       const response = await axios.post('http://localhost:3001/api/login', { username, password });
-      localStorage.setItem('token', response.data.token); // Save token to localStorage
-      setToken(response.data.token); // Update token state
+      localStorage.setItem('token', response.data.token);
+      setToken(response.data.token);
       navigate('/');
     } catch (error) {
       alert('Invalid credentials');
@@ -28,6 +28,9 @@ const Login = ({ setToken }) => {
         <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         <button type="submit">Login</button>
       </form>
+      <p>
+        Don't have an account? <Link to="/register">Sign up</Link>
+      </p>
     </div>
   );
 };

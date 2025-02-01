@@ -1,5 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const multer = require('multer'); // For file uploads
+const path = require('path');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
@@ -12,6 +14,19 @@ dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded files
+
+// Multer configuration for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  },
+});
+
+const upload = multer({ storage });
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -61,10 +76,16 @@ app.post('/api/login', async (req, res) => {
 });
 
 // Create a Note
-app.post('/api/notes', authenticateJWT, async (req, res) => {
-  const { title, content } = req.body;
+app.post('/api/notes', authenticateJWT, upload.single('image'), async (req, res) => {
+  const { title, content, audio } = req.body;
   try {
-    const newNote = new Note({ title, content, userId: req.user.userId });
+    const newNote = new Note({
+      title,
+      content,
+      userId: req.user.userId,
+      audio,
+      image: req.file ? req.file.path : null, // Save image path if uploaded
+    });
     await newNote.save();
     res.status(201).json(newNote);
   } catch (error) {
@@ -72,23 +93,47 @@ app.post('/api/notes', authenticateJWT, async (req, res) => {
   }
 });
 
-// Get All Notes for a User
-app.get('/api/notes', authenticateJWT, async (req, res) => {
+// Update a Note (Edit)
+app.put('/api/notes/:id', authenticateJWT, upload.single('image'), async (req, res) => {
+  const { title, content, audio, favorite } = req.body;
   try {
-    const notes = await Note.find({ userId: req.user.userId });
-    res.json(notes);
+    const updatedNote = await Note.findByIdAndUpdate(
+      req.params.id,
+      { title, content, audio, favorite, image: req.file ? req.file.path : null },
+      { new: true }
+    );
+    res.json(updatedNote);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching notes' });
+    res.status(500).json({ message: 'Error updating note' });
   }
 });
 
-// Delete a Note
-app.delete('/api/notes/:id', authenticateJWT, async (req, res) => {
+// Toggle Favorite
+app.patch('/api/notes/:id/favorite', authenticateJWT, async (req, res) => {
   try {
-    await Note.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Note deleted successfully' });
+    const note = await Note.findById(req.params.id);
+    note.favorite = !note.favorite;
+    await note.save();
+    res.json(note);
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting note' });
+    res.status(500).json({ message: 'Error toggling favorite' });
+  }
+});
+
+// Search Notes
+app.get('/api/notes/search', authenticateJWT, async (req, res) => {
+  const { query } = req.query;
+  try {
+    const notes = await Note.find({
+      userId: req.user.userId,
+      $or: [
+        { title: { $regex: query, $options: 'i' } },
+        { content: { $regex: query, $options: 'i' } },
+      ],
+    });
+    res.json(notes);
+  } catch (error) {
+    res.status(500).json({ message: 'Error searching notes' });
   }
 });
 

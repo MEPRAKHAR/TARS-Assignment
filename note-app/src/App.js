@@ -21,15 +21,17 @@ function App() {
       <div className="container">
         <h1>Note-Taking App</h1>
         <Routes>
+          {/* Redirect to login if not authenticated */}
+          <Route path="/" element={token ? <MainDashboard /> : <Navigate to="/login" />} />
           <Route path="/login" element={!token ? <Login setToken={setToken} /> : <Navigate to="/" />} />
           <Route path="/register" element={!token ? <Register setToken={setToken} /> : <Navigate to="/" />} />
-          <Route path="/" element={token ? <MainDashboard /> : <Navigate to="/login" />} />
         </Routes>
       </div>
     </Router>
   );
 }
 
+// Main Dashboard shows both Home (Create Notes) & NoteList (View Notes)
 const MainDashboard = () => {
   return (
     <div>
