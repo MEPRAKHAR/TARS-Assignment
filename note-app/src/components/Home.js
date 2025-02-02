@@ -63,7 +63,7 @@ const Home = () => {
       alert('You must be logged in to save notes.');
       return;
     }
-
+  
     const formData = new FormData();
     formData.append('title', title);
     formData.append('content', content);
@@ -73,7 +73,7 @@ const Home = () => {
     if (imageFile) {
       formData.append('image', imageFile); // Append the image file
     }
-
+  
     try {
       await axios.post('http://localhost:3001/api/notes', formData, {
         headers: {

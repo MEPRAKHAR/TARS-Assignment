@@ -53,13 +53,42 @@ app.post('/api/notes', authenticateJWT, upload.fields([{ name: 'audio', maxCount
       title,
       content,
       userId: req.user.userId,
-      audio: req.files.audio ? req.files.audio[0].path : null,
-      image: req.files.image ? req.files.image[0].path : null,
+      audio: req.files.audio ? req.files.audio[0].path : null, // Save the audio file path
+      image: req.files.image ? req.files.image[0].path : null, // Save the image file path
     });
     await newNote.save();
     res.status(201).json(newNote);
   } catch (error) {
     res.status(500).json({ message: 'Error saving note' });
+  }
+});
+
+
+// Update a Note (PUT)
+app.put('/api/notes/:id', authenticateJWT, upload.fields([{ name: 'audio', maxCount: 1 }, { name: 'image', maxCount: 1 }]), async (req, res) => {
+  const { title, content } = req.body;
+  const noteId = req.params.id;
+
+  try {
+    const updatedNote = await Note.findByIdAndUpdate(
+      noteId,
+      {
+        title,
+        content,
+        audio: req.files.audio ? req.files.audio[0].path : null,
+        image: req.files.image ? req.files.image[0].path : null,
+      },
+      { new: true } // Return the updated note
+    );
+
+    if (!updatedNote) {
+      return res.status(404).json({ message: 'Note not found' });
+    }
+
+    res.json(updatedNote);
+  } catch (error) {
+    console.error('Error updating note:', error);
+    res.status(500).json({ message: 'Error updating note' });
   }
 });
 

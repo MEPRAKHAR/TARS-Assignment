@@ -96,9 +96,13 @@ const NoteList = () => {
     const formData = new FormData();
     formData.append('title', editTitle);
     formData.append('content', editContent);
-    formData.append('audio', audioFile);
-    formData.append('image', imageFile);
-
+    if (audioFile) {
+      formData.append('audio', audioFile);
+    }
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+  
     try {
       const response = await axios.put(
         `http://localhost:3001/api/notes/${selectedNote._id}`,
@@ -110,10 +114,13 @@ const NoteList = () => {
           },
         }
       );
+  
+      // Update the notes state with the updated note
       setNotes(notes.map(note => (note._id === selectedNote._id ? response.data : note)));
-      setIsModalOpen(false);
+      setIsModalOpen(false); // Close the modal
     } catch (error) {
       console.error('Error updating note:', error);
+      alert('Failed to update note. Please try again.');
     }
   };
 
@@ -132,6 +139,8 @@ const NoteList = () => {
     navigator.clipboard.writeText(text);
     alert('Copied to clipboard!');
   };
+
+
 
   return (
     <div className="notes-container">
@@ -159,7 +168,9 @@ const NoteList = () => {
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
             />
-            {selectedNote.audio && <audio src={selectedNote.audio} controls />}
+            {selectedNote.audio && ( <audio controls src=
+            {`http://localhost:3001/${selectedNote.audio}`} />
+                                                          )}
             {selectedNote.image && <img src={selectedNote.image} alt="Note" style={{ width: '100px' }} />}
             <input type="file" accept="audio/*" onChange={handleAudioUpload} />
             <input type="file" accept="image/*" onChange={handleImageUpload} />
