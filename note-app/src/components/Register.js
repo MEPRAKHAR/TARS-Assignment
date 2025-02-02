@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom'; // Import Link
+import { useNavigate } from 'react-router-dom';
 import '../App.css';
 
-const Register = ({ setToken }) => {
+const Register = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
@@ -12,25 +12,34 @@ const Register = ({ setToken }) => {
     e.preventDefault();
     try {
       const response = await axios.post('http://localhost:3001/api/register', { username, password });
-      localStorage.setItem('token', response.data.token);
-      setToken(response.data.token);
-      navigate('/');
+      console.log('Registration successful:', response.data);
+      navigate('/login'); // Redirect to login page after successful registration
     } catch (error) {
       console.error('Registration failed:', error);
+      alert(error.response?.data?.message || 'Registration failed. Please try again.');
     }
   };
 
   return (
-    <div className="login-container">
+    <div className="register-container">
       <h2>Register</h2>
       <form onSubmit={handleSubmit}>
-        <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} required />
-        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <input
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
         <button type="submit">Register</button>
       </form>
-      <p>
-        Already have an account? <Link to="/login">Log in</Link>
-      </p>
     </div>
   );
 };

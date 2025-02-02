@@ -46,6 +46,77 @@ const authenticateJWT = (req, res, next) => {
 };
 
 
+app.post('/api/notes', authenticateJWT, upload.fields([{ name: 'audio', maxCount: 1 }, { name: 'image', maxCount: 1 }]), async (req, res) => {
+  const { title, content } = req.body;
+  try {
+    const newNote = new Note({
+      title,
+      content,
+      userId: req.user.userId,
+      audio: req.files.audio ? req.files.audio[0].path : null,
+      image: req.files.image ? req.files.image[0].path : null,
+    });
+    await newNote.save();
+    res.status(201).json(newNote);
+  } catch (error) {
+    res.status(500).json({ message: 'Error saving note' });
+  }
+});
+
+
+// User Registration Route
+app.post('/api/register', async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    // Check if the user already exists
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create a new user
+    const user = new User({ username, password: hashedPassword });
+    await user.save();
+
+    res.status(201).json({ message: 'User registered successfully' });
+  } catch (error) {
+    console.error('Error registering user:', error);
+    res.status(500).json({ message: 'Error registering user' });
+  }
+});
+
+// User Login Route
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    // Find the user in the database
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Compare the provided password with the hashed password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Generate a token
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    // Login successful
+    res.status(200).json({ token, message: 'Login successful' });
+  } catch (error) {
+    console.error('Error logging in:', error);
+    res.status(500).json({ message: 'Error logging in' });
+  }
+});
+
 app.get('/api/notes', authenticateJWT, async (req, res) => {
   try {
     const notes = await Note.find({ userId: req.user.userId }); // Fetch notes for the logged-in user
