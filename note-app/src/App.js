@@ -48,7 +48,6 @@ const AppContent = ({ token, setToken, handleLogout, isSidebarOpen, setIsSidebar
           {isSidebarOpen && (
             <div className="sidebar">
               <button onClick={() => navigate('/')}>Home</button>
-              <button onClick={() => navigate('/favorites')}>Favorites</button>
               <button onClick={handleLogout}>Logout</button>
             </div>
           )}

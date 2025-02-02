@@ -49,16 +49,33 @@ const NoteList = () => {
   const toggleFavorite = async (id) => {
     try {
       const note = notes.find(note => note._id === id);
+      if (!note) {
+        console.error('Note not found');
+        return;
+      }
+  
+      const updatedFavoriteStatus = !note.favorite;
+  
+      console.log('Toggling favorite for note:', note.title);
+      console.log('New favorite status:', updatedFavoriteStatus);
+  
+      // Send the PUT request to toggle favorite
       const response = await axios.put(
-        `http://localhost:3001/api/notes/${id}`,
-        { favorite: !note.favorite },
+        `http://localhost:3001/api/notes/${id}/favorite`,
+        { favorite: updatedFavoriteStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+  
+      console.log('Updated note response:', response.data);
+  
+      // Update the notes state with the updated favorite status
       setNotes(notes.map(note => (note._id === id ? response.data : note)));
     } catch (error) {
-      console.error('Error toggling favorite:', error);
+      console.error('Error toggling favorite:', error.response?.data || error.message);
+      alert('An error occurred while toggling favorite.');
     }
   };
+  
 
   const handleNoteClick = (note) => {
     setSelectedNote(note);
@@ -119,7 +136,9 @@ const NoteList = () => {
   return (
     <div className="notes-container">
       <h2>My Notes</h2>
-      
+      <button onClick={() => setShowFavorites(!showFavorites)}>
+        {showFavorites ? 'Show All Notes' : 'Show Favorites'}
+      </button>
       <input
         type="text"
         placeholder="Search notes..."
@@ -147,7 +166,7 @@ const NoteList = () => {
             <button onClick={updateNote}>Update Note</button>
             <button onClick={() => deleteNote(selectedNote._id)}>Delete Note</button>
             <button onClick={() => copyToClipboard(selectedNote.content)}>Copy to Clipboard</button>
-            <button onClick={() => toggleFavorite(selectedNote._id)}>
+            <button onClick={(e) => { e.stopPropagation(); toggleFavorite(selectedNote._id); }}>
               {selectedNote.favorite ? 'Unfavorite' : 'Favorite'}
             </button>
             <button onClick={() => setIsModalOpen(false)}>Close</button>
