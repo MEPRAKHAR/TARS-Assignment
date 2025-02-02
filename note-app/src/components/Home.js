@@ -35,12 +35,12 @@ const Home = () => {
           mediaRecorderRef.current.start();
           setIsRecording(true);
 
-          setTimeout(() => {
-            if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-              mediaRecorderRef.current.stop();
-              setIsRecording(false);
-            }
-          }, 60000);
+           setTimeout(() => {
+          if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+          }
+        }, 60000);
 
           // Start transcription
           startRecording((transcript) => {

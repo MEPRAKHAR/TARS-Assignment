@@ -14,23 +14,25 @@ const NoteList = () => {
   const [imageFile, setImageFile] = useState(null);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
+  const [showFavorites, setShowFavorites] = useState(false);
+
+  const filteredNotes = showFavorites ? notes.filter(note => note.favorite) : notes;
 
   useEffect(() => {
     if (!token) {
       navigate('/login');
       return;
     }
-  
+
     axios.get('http://localhost:3001/api/notes', {
       headers: { Authorization: `Bearer ${token}` },
     })
-    .then(response => {
-      const sortedNotes = response.data.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-      setNotes(sortedNotes);
-    })
-    .catch(error => console.error('Error fetching notes:', error));
-}, [token, navigate]);
-
+      .then(response => {
+        const sortedNotes = response.data.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        setNotes(sortedNotes);
+      })
+      .catch(error => console.error('Error fetching notes:', error));
+  }, [token, navigate]);
 
   const handleSearch = async (query) => {
     setSearchQuery(query);
@@ -41,6 +43,20 @@ const NoteList = () => {
       setNotes(response.data);
     } catch (error) {
       console.error('Error searching notes:', error);
+    }
+  };
+
+  const toggleFavorite = async (id) => {
+    try {
+      const note = notes.find(note => note._id === id);
+      const response = await axios.put(
+        `http://localhost:3001/api/notes/${id}`,
+        { favorite: !note.favorite },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setNotes(notes.map(note => (note._id === id ? response.data : note)));
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
     }
   };
 
@@ -103,13 +119,14 @@ const NoteList = () => {
   return (
     <div className="notes-container">
       <h2>My Notes</h2>
+      
       <input
         type="text"
         placeholder="Search notes..."
         value={searchQuery}
         onChange={(e) => handleSearch(e.target.value)}
       />
-      {notes.map(note => (
+      {filteredNotes.map(note => (
         <div key={note._id} className="note" onClick={() => handleNoteClick(note)}>
           <h3>{note.title}</h3>
         </div>
@@ -130,6 +147,9 @@ const NoteList = () => {
             <button onClick={updateNote}>Update Note</button>
             <button onClick={() => deleteNote(selectedNote._id)}>Delete Note</button>
             <button onClick={() => copyToClipboard(selectedNote.content)}>Copy to Clipboard</button>
+            <button onClick={() => toggleFavorite(selectedNote._id)}>
+              {selectedNote.favorite ? 'Unfavorite' : 'Favorite'}
+            </button>
             <button onClick={() => setIsModalOpen(false)}>Close</button>
           </div>
         </div>
