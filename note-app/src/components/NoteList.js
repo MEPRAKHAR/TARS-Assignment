@@ -24,9 +24,13 @@ const NoteList = () => {
     axios.get('http://localhost:3001/api/notes', {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then(response => setNotes(response.data))
-      .catch(error => console.error('Error fetching notes:', error));
-  }, [token, navigate]);
+    .then(response => {
+      const sortedNotes = response.data.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      setNotes(sortedNotes);
+    })
+    .catch(error => console.error('Error fetching notes:', error));
+}, [token, navigate]);
+
 
   const handleSearch = async (query) => {
     setSearchQuery(query);

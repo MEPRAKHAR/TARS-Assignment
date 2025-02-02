@@ -94,7 +94,7 @@ const Home = () => {
         <button type="button" onClick={handleRecord}>
           {isRecording ? 'Stop Recording' : 'Start Recording'}
         </button>
-        <input type="file" accept="image/*" onChange={handleImageUpload} ref={fileInputRef} />
+        
         <button type="submit">Save Note</button>
       </form>
       {audioBlob && (

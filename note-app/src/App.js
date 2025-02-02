@@ -23,8 +23,8 @@ function App() {
         <Routes>
           {/* Redirect to login if not authenticated */}
           <Route path="/" element={token ? <MainDashboard /> : <Navigate to="/login" />} />
-          <Route path="/login" element={<Login setToken={setToken} />} />
-          <Route path="/register" element={<Register setToken={setToken} />} />
+          <Route path="/login" element={!token ? <Login setToken={setToken} /> : <Navigate to="/" />} />
+          <Route path="/register" element={!token ? <Register setToken={setToken} /> : <Navigate to="/" />} />
         </Routes>
       </div>
     </Router>
