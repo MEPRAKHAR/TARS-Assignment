@@ -11,7 +11,8 @@ const Login = ({ setToken }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:3001/api/login', { username, password });
+      const response = await axios.post('http://localhost:3001/api/auth/login', { username, password })
+;
       console.log(response);
       console.log(response.data.token);
       console.log('Login successful:', response.data);

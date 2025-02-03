@@ -1,13 +1,14 @@
+// models/Note.js
 const mongoose = require('mongoose');
 
-const noteSchema = new mongoose.Schema({
+const NoteSchema = new mongoose.Schema({
   title: { type: String, required: true },
   content: { type: String, required: true },
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  audio: { type: String, default: null },
+  image: { type: String, default: null },
   favorite: { type: Boolean, default: false },
-  audio: { type: String }, // Store audio file path or URL
-  image: { type: String }, // Store image file path or URL
   createdAt: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model('Note', noteSchema);
+module.exports = mongoose.model('Note', NoteSchema);

@@ -11,9 +11,10 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:3001/api/register', { username, password });
+      const response = await axios.post('http://localhost:3001/api/auth/register', { username, password })
+;
       console.log('Registration successful:', response.data);
-      navigate('/login'); // Redirect to login page after successful registration
+      navigate('/login');
     } catch (error) {
       console.error('Registration failed:', error);
       alert(error.response?.data?.message || 'Registration failed. Please try again.');
