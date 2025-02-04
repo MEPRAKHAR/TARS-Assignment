@@ -11,7 +11,7 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/register', { username, password })
+      const response = await axios.post('https://tars-assignment-8286.vercel.app/api/auth/register', { username, password })
 ;
       console.log('Registration successful:', response.data);
       navigate('/login');
