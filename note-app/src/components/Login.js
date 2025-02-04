@@ -11,7 +11,10 @@ const Login = ({ setToken }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/login', { username, password })
+      const response = await axios.post('https://tars-assignment-8286.vercel.app/api/auth/login', { username, password },{
+        headers: {
+          "Content-Type": "application/json",
+        }})
 ;
       console.log(response);
       console.log(response.data.token);

@@ -75,7 +75,7 @@ const Home = () => {
     }
   
     try {
-      await axios.post('http://localhost:3001/api/notes', formData, {
+      await axios.post('https://tars-assignment-8286.vercel.app/api/notes', formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
