@@ -1,4 +1,3 @@
-// index.js
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -23,8 +22,8 @@ mongoose
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Mount Routes
-const authRoutes = require('./routes/authroutes');
-const noteRoutes = require('./routes/noteroutes');
+const authRoutes = require('./routes/authRoutes');
+const noteRoutes = require('./routes/noteRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/notes', noteRoutes);
