@@ -1,36 +1,35 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate , Link} from 'react-router-dom';
-import '../App.css';
+import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate, Link } from "react-router-dom";
+import "../App.css";
 
 const Login = ({ setToken }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('https://tars-assignment-8286.vercel.app/api/auth/login', { username, password },{
-        headers: {
-          "Content-Type": "application/json",
-        }})
-;
+      const response = await axios.post("/api/auth/login", {
+        username,
+        password,
+      });
       console.log(response);
       console.log(response.data.token);
-      console.log('Login successful:', response.data);
+      console.log("Login successful:", response.data);
 
       // Save the token to localStorage
-      localStorage.setItem('token', response.data.token);
+      localStorage.setItem("token", response.data.token);
 
       // Update the token state
       setToken(response.data.token);
 
       // Redirect to home page
-      navigate('/');
+      navigate("/");
     } catch (error) {
-      console.error('Login failed:', error);
-      alert(error.response?.data?.message || 'Login failed. Please try again.');
+      console.error("Login failed:", error);
+      alert(error.response?.data?.message || "Login failed. Please try again.");
     }
   };
 

@@ -45,3 +45,4 @@ if (process.env.NODE_ENV !== 'production') {
 
 // For Vercel Serverless Deployment
 module.exports.handler = serverless(app); // This is where we wrap the app with serverless-http
+
